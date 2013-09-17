@@ -1,5 +1,6 @@
 package org.nibor.git_merge_repos;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -37,8 +38,19 @@ public class Main {
 			exitInvalidUsage("usage: program <repository_url>:<target_directory>...");
 		}
 
-		RepoMerger merger = new RepoMerger("output", subtreeConfigs);
+		File outputDirectory = new File("merged-repo");
+		String outputPath = outputDirectory.getAbsolutePath();
+		System.out.println("Started merging " + subtreeConfigs.size()
+				+ " repositories into one, output directory: " + outputPath);
+
+		long start = System.currentTimeMillis();
+		RepoMerger merger = new RepoMerger(outputPath, subtreeConfigs);
 		merger.run();
+		long end = System.currentTimeMillis();
+
+		long timeMs = (end - start);
+		System.out.println("Done, took " + timeMs + " ms");
+		System.out.println("Merged repository: " + outputPath);
 	}
 
 	private static void exitInvalidUsage(String message) {
