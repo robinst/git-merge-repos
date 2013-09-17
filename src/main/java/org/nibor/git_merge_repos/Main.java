@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,12 +46,34 @@ public class Main {
 
 		long start = System.currentTimeMillis();
 		RepoMerger merger = new RepoMerger(outputPath, subtreeConfigs);
-		merger.run();
+		List<MergedRef> mergedRefs = merger.run();
 		long end = System.currentTimeMillis();
 
 		long timeMs = (end - start);
+		printIncompleteRefs(mergedRefs);
 		System.out.println("Done, took " + timeMs + " ms");
 		System.out.println("Merged repository: " + outputPath);
+
+	}
+
+	private static void printIncompleteRefs(List<MergedRef> mergedRefs) {
+		for (MergedRef mergedRef : mergedRefs) {
+			if (!mergedRef.getConfigsWithoutRef().isEmpty()) {
+				System.out.println(mergedRef.getRefType() + " '" + mergedRef.getRefName()
+						+ "' was not in: " + join(mergedRef.getConfigsWithoutRef()));
+			}
+		}
+	}
+
+	private static String join(Collection<SubtreeConfig> configs) {
+		StringBuilder sb = new StringBuilder();
+		for (SubtreeConfig config : configs) {
+			if (sb.length() != 0) {
+				sb.append(", ");
+			}
+			sb.append(config.getRemoteName());
+		}
+		return sb.toString();
 	}
 
 	private static void exitInvalidUsage(String message) {

@@ -53,12 +53,16 @@ public class RepoMerger {
 		}
 	}
 
-	public void run() throws IOException, GitAPIException {
+	public List<MergedRef> run() throws IOException, GitAPIException {
 		fetch();
-		mergeBranches();
-		mergeTags();
+		List<MergedRef> mergedBranches = mergeBranches();
+		List<MergedRef> mergedTags = mergeTags();
+		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
+		mergedRefs.addAll(mergedBranches);
+		mergedRefs.addAll(mergedTags);
 		deleteOriginalRefs();
 		resetToBranch();
+		return mergedRefs;
 	}
 
 	private void fetch() throws GitAPIException {
@@ -74,18 +78,24 @@ public class RepoMerger {
 		}
 	}
 
-	private void mergeBranches() throws IOException {
+	private List<MergedRef> mergeBranches() throws IOException {
+		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
 		Collection<String> branches = getRefSet("refs/heads/original/");
 		for (String branch : branches) {
-			mergeBranch(branch);
+			MergedRef mergedBranch = mergeBranch(branch);
+			mergedRefs.add(mergedBranch);
 		}
+		return mergedRefs;
 	}
 
-	private void mergeTags() throws IOException {
+	private List<MergedRef> mergeTags() throws IOException {
+		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
 		Collection<String> tags = getRefSet("refs/tags/original/");
 		for (String tag : tags) {
-			mergeTag(tag);
+			MergedRef mergedTag = mergeTag(tag);
+			mergedRefs.add(mergedTag);
 		}
+		return mergedRefs;
 	}
 
 	private void deleteOriginalRefs() throws IOException {
@@ -115,7 +125,7 @@ public class RepoMerger {
 		}
 	}
 
-	private void mergeBranch(String branch) throws AmbiguousObjectException,
+	private MergedRef mergeBranch(String branch) throws AmbiguousObjectException,
 			IncorrectObjectTypeException, IOException, MissingObjectException {
 
 		Map<SubtreeConfig, ObjectId> resolvedRefs = resolveRefs(
@@ -131,17 +141,19 @@ public class RepoMerger {
 			}
 		}
 
-		String message = createMessage("branch", branch, parentCommits.keySet());
+		MergedRef mergedRef = getMergedRef("branch", branch, parentCommits.keySet());
 
 		ObjectId mergeCommit = new SubtreeMerger(repository).createMergeCommit(parentCommits,
-				message);
+				mergedRef.getMessage());
 
 		RefUpdate refUpdate = repository.updateRef("refs/heads/" + branch);
 		refUpdate.setNewObjectId(mergeCommit);
 		refUpdate.update();
+
+		return mergedRef;
 	}
 
-	private void mergeTag(String tagName) throws IOException {
+	private MergedRef mergeTag(String tagName) throws IOException {
 		Map<SubtreeConfig, ObjectId> resolvedRefs = resolveRefs(
 				"refs/tags/original/", tagName);
 
@@ -198,9 +210,9 @@ public class RepoMerger {
 			revWalk.release();
 		}
 
-		String message = createMessage("tag", tagName, parentCommits.keySet());
+		MergedRef mergedRef = getMergedRef("tag", tagName, parentCommits.keySet());
 		ObjectId mergeCommit = new SubtreeMerger(repository).createMergeCommit(parentCommits,
-				message);
+				mergedRef.getMessage());
 
 		ObjectId objectToReference;
 		if (referenceTag != null) {
@@ -229,6 +241,8 @@ public class RepoMerger {
 			throw new IllegalStateException("Creating tag ref " + ref + " for "
 					+ objectToReference + " failed with result " + result);
 		}
+
+		return mergedRef;
 	}
 
 	private Collection<String> getRefSet(String prefix) throws IOException {
@@ -255,39 +269,13 @@ public class RepoMerger {
 		return result;
 	}
 
-	private String createMessage(String refType, String refName,
+	private MergedRef getMergedRef(String refType, String refName,
 			Set<SubtreeConfig> configsWithRef) {
 		LinkedHashSet<SubtreeConfig> configsWithoutRef = new LinkedHashSet<SubtreeConfig>(
 				subtreeConfigs);
 		configsWithoutRef.removeAll(configsWithRef);
 
-		StringBuilder messageBuilder = new StringBuilder();
-		messageBuilder.append("Merge ").append(refType).append(" '").append(refName)
-				.append("' from multiple repositories");
-		messageBuilder.append("\n\n");
-		messageBuilder.append("Repositories:");
-		appendRepositoryNames(messageBuilder, configsWithRef);
-		if (!configsWithoutRef.isEmpty()) {
-			messageBuilder.append("\n\nRepositories without this ").append(refType).append(":");
-			appendRepositoryNames(messageBuilder, configsWithoutRef);
-
-			for (SubtreeConfig config : configsWithoutRef) {
-				System.err.println("Repository " + config.getRemoteName()
-						+ " did not contain " + refType + " '" + refName
-						+ "', will not be included in merged " + refType + ".");
-			}
-		}
-		messageBuilder.append("\n");
-		String message = messageBuilder.toString();
-		return message;
-	}
-
-	private static void appendRepositoryNames(StringBuilder builder,
-			Collection<SubtreeConfig> configs) {
-		for (SubtreeConfig config : configs) {
-			builder.append("\n\t");
-			builder.append(config.getRemoteName());
-		}
+		return new MergedRef(refType, refName, configsWithRef, configsWithoutRef);
 	}
 
 }
