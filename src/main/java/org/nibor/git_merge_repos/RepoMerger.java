@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
@@ -57,6 +58,7 @@ public class RepoMerger {
 		mergeBranches();
 		mergeTags();
 		deleteOriginalRefs();
+		resetToBranch();
 	}
 
 	private void fetch() throws GitAPIException {
@@ -102,6 +104,14 @@ public class RepoMerger {
 			}
 		} finally {
 			revWalk.release();
+		}
+	}
+
+	private void resetToBranch() throws IOException, GitAPIException {
+		Ref master = repository.getRef(Constants.R_HEADS + "master");
+		if (master != null) {
+			Git git = new Git(repository);
+			git.reset().setMode(ResetType.HARD).setRef(master.getName()).call();
 		}
 	}
 
