@@ -83,8 +83,9 @@ dependencies will be automatically downloaded when running the program.
 Other Solutions
 ---------------
 
-When you have a simple, linear history, try out
-[git-stitch-repo][git-stitch-repo].
+* When you have a simple, linear history, try out
+  [git-stitch-repo][git-stitch-repo]
+* See the question [Combining multiple git repositories on Stack Overflow][stackoverflow]
 
 License
 -------
@@ -96,3 +97,4 @@ Licensed under the Apache License, see LICENSE file for details.
 [maven]: http://maven.apache.org/
 [jgit]: http://eclipse.org/jgit/
 [git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.101/script/git-stitch-repo
+[stackoverflow]: http://stackoverflow.com/questions/277029/combining-multiple-git-repositories
