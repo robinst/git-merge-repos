@@ -2,6 +2,8 @@ package org.nibor.git_merge_repos;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -34,17 +36,20 @@ public class SubtreeMerger {
 
 	public ObjectId createMergeCommit(Map<SubtreeConfig, RevCommit> parentCommits, String message)
 			throws IOException {
+		PersonIdent latestIdent = getLatestPersonIdent(parentCommits.values());
 		TreeFormatter treeFormatter = createTreeFormatter(parentCommits, message);
 		List<? extends ObjectId> parentIds = new ArrayList<RevCommit>(parentCommits.values());
 		ObjectInserter inserter = repository.newObjectInserter();
 		try {
 			ObjectId treeId = inserter.insert(treeFormatter);
 
-			PersonIdent person = new PersonIdent(repository);
+			PersonIdent repositoryUser = new PersonIdent(repository);
+			PersonIdent ident = new PersonIdent(repositoryUser, latestIdent.getWhen().getTime(),
+					latestIdent.getTimeZoneOffset());
 			CommitBuilder commitBuilder = new CommitBuilder();
 			commitBuilder.setTreeId(treeId);
-			commitBuilder.setAuthor(person);
-			commitBuilder.setCommitter(person);
+			commitBuilder.setAuthor(ident);
+			commitBuilder.setCommitter(ident);
 			commitBuilder.setMessage(message);
 			commitBuilder.setParentIds(parentIds);
 			ObjectId mergeCommit = inserter.insert(commitBuilder);
@@ -53,6 +58,18 @@ public class SubtreeMerger {
 		} finally {
 			inserter.release();
 		}
+	}
+
+	private PersonIdent getLatestPersonIdent(Collection<RevCommit> commits) {
+		PersonIdent latest = null;
+		for (RevCommit commit : commits) {
+			PersonIdent ident = commit.getCommitterIdent();
+			Date when = ident.getWhen();
+			if (latest == null || when.after(latest.getWhen())) {
+				latest = ident;
+			}
+		}
+		return latest;
 	}
 
 	private TreeFormatter createTreeFormatter(Map<SubtreeConfig, RevCommit> parentCommits,
