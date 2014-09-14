@@ -2,11 +2,15 @@ package org.nibor.git_merge_repos;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheBuilder;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -15,7 +19,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
@@ -37,11 +40,11 @@ public class SubtreeMerger {
 	public ObjectId createMergeCommit(Map<SubtreeConfig, RevCommit> parentCommits, String message)
 			throws IOException {
 		PersonIdent latestIdent = getLatestPersonIdent(parentCommits.values());
-		TreeFormatter treeFormatter = createTreeFormatter(parentCommits, message);
+		DirCache treeDirCache = createTreeDirCache(parentCommits, message);
 		List<? extends ObjectId> parentIds = new ArrayList<RevCommit>(parentCommits.values());
 		ObjectInserter inserter = repository.newObjectInserter();
 		try {
-			ObjectId treeId = inserter.insert(treeFormatter);
+			ObjectId treeId = treeDirCache.writeTree(inserter);
 
 			PersonIdent repositoryUser = new PersonIdent(repository);
 			PersonIdent ident = new PersonIdent(repositoryUser, latestIdent.getWhen().getTime(),
@@ -72,15 +75,16 @@ public class SubtreeMerger {
 		return latest;
 	}
 
-	private TreeFormatter createTreeFormatter(Map<SubtreeConfig, RevCommit> parentCommits,
+	private DirCache createTreeDirCache(Map<SubtreeConfig, RevCommit> parentCommits,
 			String commitMessage) throws MissingObjectException, IncorrectObjectTypeException,
 			CorruptObjectException, IOException {
+
 		TreeWalk treeWalk = new TreeWalk(repository);
 		try {
-			treeWalk.setRecursive(false);
+			treeWalk.setRecursive(true);
 			addTrees(parentCommits, treeWalk);
 
-			TreeFormatter treeFormatter = new TreeFormatter();
+			DirCacheBuilder builder = DirCache.newInCore().builder();
 			while (treeWalk.next()) {
 				AbstractTreeIterator iterator = getSingleTreeIterator(treeWalk, commitMessage);
 				if (iterator == null) {
@@ -88,11 +92,15 @@ public class SubtreeMerger {
 							"Tree walker did not return a single tree (should not happen): "
 									+ treeWalk.getPathString());
 				}
-				treeFormatter.append(iterator.getEntryPathBuffer(), 0,
-						iterator.getEntryPathLength(), iterator.getEntryFileMode(),
-						iterator.getEntryObjectId());
+				byte[] path = Arrays.copyOf(iterator.getEntryPathBuffer(),
+						iterator.getEntryPathLength());
+				DirCacheEntry entry = new DirCacheEntry(path);
+				entry.setFileMode(iterator.getEntryFileMode());
+				entry.setObjectId(iterator.getEntryObjectId());
+				builder.add(entry);
 			}
-			return treeFormatter;
+			builder.finish();
+			return builder.getDirCache();
 		} finally {
 			treeWalk.release();
 		}
