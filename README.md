@@ -5,7 +5,7 @@ Program for merging multiple Git repositories into one, preserving previous
 history, tags and branches.
 
 This is useful when you had multiple repositories for one project where you had
-the same set of branches and tags.
+more or less the same set of branches and tags.
 
 How it works. For each branch/tag name:
 
@@ -90,11 +90,11 @@ Other Solutions
 License
 -------
 
-Copyright © 2013 Robin Stocker
+Copyright © 2013, 2014 Robin Stocker
 
 Licensed under the Apache License, see LICENSE file for details.
 
 [maven]: http://maven.apache.org/
 [jgit]: http://eclipse.org/jgit/
-[git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.101/script/git-stitch-repo
+[git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.105/script/git-stitch-repo
 [stackoverflow]: http://stackoverflow.com/questions/277029/combining-multiple-git-repositories
