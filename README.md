@@ -63,7 +63,7 @@ With the same example as above, do the following for each repository beforehand
     cd repo
 
     git filter-branch --index-filter \
-      'git ls-files -s | sed "s-\t\"*-&newsubdir/-" | GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info && mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' \
+      'tab=$(printf "\t") && git ls-files -s | sed "s-$tab\"*-&newsubdir/-" | GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info && mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' \
       --tag-name-filter cat \
       -- --all
 
