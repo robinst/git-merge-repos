@@ -14,9 +14,6 @@ import java.util.TreeSet;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
@@ -57,7 +54,7 @@ public class RepoMerger {
 		fetch();
 		List<MergedRef> mergedBranches = mergeBranches();
 		List<MergedRef> mergedTags = mergeTags();
-		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
+		List<MergedRef> mergedRefs = new ArrayList<>();
 		mergedRefs.addAll(mergedBranches);
 		mergedRefs.addAll(mergedTags);
 		deleteOriginalRefs();
@@ -79,7 +76,7 @@ public class RepoMerger {
 	}
 
 	private List<MergedRef> mergeBranches() throws IOException {
-		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
+		List<MergedRef> mergedRefs = new ArrayList<>();
 		Collection<String> branches = getRefSet("refs/heads/original/");
 		for (String branch : branches) {
 			MergedRef mergedBranch = mergeBranch(branch);
@@ -89,7 +86,7 @@ public class RepoMerger {
 	}
 
 	private List<MergedRef> mergeTags() throws IOException {
-		List<MergedRef> mergedRefs = new ArrayList<MergedRef>();
+		List<MergedRef> mergedRefs = new ArrayList<>();
 		Collection<String> tags = getRefSet("refs/tags/original/");
 		for (String tag : tags) {
 			MergedRef mergedTag = mergeTag(tag);
@@ -99,9 +96,8 @@ public class RepoMerger {
 	}
 
 	private void deleteOriginalRefs() throws IOException {
-		RevWalk revWalk = new RevWalk(repository);
-		try {
-			Collection<Ref> refs = new ArrayList<Ref>();
+		try (RevWalk revWalk = new RevWalk(repository)) {
+			Collection<Ref> refs = new ArrayList<>();
 			RefDatabase refDatabase = repository.getRefDatabase();
 			Map<String, Ref> originalBranches = refDatabase.getRefs("refs/heads/original/");
 			Map<String, Ref> originalTags = refDatabase.getRefs("refs/tags/original/");
@@ -112,8 +108,6 @@ public class RepoMerger {
 				refUpdate.setForceUpdate(true);
 				refUpdate.delete(revWalk);
 			}
-		} finally {
-			revWalk.release();
 		}
 	}
 
@@ -125,19 +119,19 @@ public class RepoMerger {
 		}
 	}
 
-	private MergedRef mergeBranch(String branch) throws AmbiguousObjectException,
-			IncorrectObjectTypeException, IOException, MissingObjectException {
+	private MergedRef mergeBranch(String branch) throws IOException {
 
 		Map<SubtreeConfig, ObjectId> resolvedRefs = resolveRefs(
 				"refs/heads/original/", branch);
 
-		Map<SubtreeConfig, RevCommit> parentCommits = new LinkedHashMap<SubtreeConfig, RevCommit>();
-		RevWalk revWalk = new RevWalk(repository);
-		for (SubtreeConfig config : subtreeConfigs) {
-			ObjectId objectId = resolvedRefs.get(config);
-			if (objectId != null) {
-				RevCommit commit = revWalk.parseCommit(objectId);
-				parentCommits.put(config, commit);
+		Map<SubtreeConfig, RevCommit> parentCommits = new LinkedHashMap<>();
+		try (RevWalk revWalk = new RevWalk(repository)) {
+			for (SubtreeConfig config : subtreeConfigs) {
+				ObjectId objectId = resolvedRefs.get(config);
+				if (objectId != null) {
+					RevCommit commit = revWalk.parseCommit(objectId);
+					parentCommits.put(config, commit);
+				}
 			}
 		}
 
@@ -160,10 +154,9 @@ public class RepoMerger {
 		// Annotated tag that should be used for creating the merged tag, null
 		// if only lightweight tags exist
 		RevTag referenceTag = null;
-		Map<SubtreeConfig, RevCommit> parentCommits = new LinkedHashMap<SubtreeConfig, RevCommit>();
+		Map<SubtreeConfig, RevCommit> parentCommits = new LinkedHashMap<>();
 
-		RevWalk revWalk = new RevWalk(repository);
-		try {
+		try (RevWalk revWalk = new RevWalk(repository)) {
 			for (Map.Entry<SubtreeConfig, ObjectId> entry : resolvedRefs
 					.entrySet()) {
 				SubtreeConfig config = entry.getKey();
@@ -206,8 +199,6 @@ public class RepoMerger {
 				}
 				parentCommits.put(config, commit);
 			}
-		} finally {
-			revWalk.release();
 		}
 
 		MergedRef mergedRef = getMergedRef("tag", tagName, parentCommits.keySet());
@@ -221,12 +212,9 @@ public class RepoMerger {
 			tagBuilder.setMessage(referenceTag.getFullMessage());
 			tagBuilder.setTagger(referenceTag.getTaggerIdent());
 			tagBuilder.setObjectId(mergeCommit, Constants.OBJ_COMMIT);
-			ObjectInserter inserter = repository.newObjectInserter();
-			try {
+			try (ObjectInserter inserter = repository.newObjectInserter()) {
 				objectToReference = inserter.insert(tagBuilder);
 				inserter.flush();
-			} finally {
-				inserter.release();
 			}
 		} else {
 			objectToReference = mergeCommit;
@@ -247,7 +235,7 @@ public class RepoMerger {
 
 	private Collection<String> getRefSet(String prefix) throws IOException {
 		Map<String, Ref> refs = repository.getRefDatabase().getRefs(prefix);
-		TreeSet<String> result = new TreeSet<String>();
+		TreeSet<String> result = new TreeSet<>();
 		for (String refName : refs.keySet()) {
 			String branch = refName.split("/", 2)[1];
 			result.add(branch);
@@ -257,7 +245,7 @@ public class RepoMerger {
 
 	private Map<SubtreeConfig, ObjectId> resolveRefs(String refPrefix,
 			String name) throws IOException {
-		Map<SubtreeConfig, ObjectId> result = new LinkedHashMap<SubtreeConfig, ObjectId>();
+		Map<SubtreeConfig, ObjectId> result = new LinkedHashMap<>();
 		for (SubtreeConfig config : subtreeConfigs) {
 			String repositoryName = config.getRemoteName();
 			String remoteBranch = refPrefix + repositoryName + "/" + name;
@@ -271,7 +259,7 @@ public class RepoMerger {
 
 	private MergedRef getMergedRef(String refType, String refName,
 			Set<SubtreeConfig> configsWithRef) {
-		LinkedHashSet<SubtreeConfig> configsWithoutRef = new LinkedHashSet<SubtreeConfig>(
+		LinkedHashSet<SubtreeConfig> configsWithoutRef = new LinkedHashSet<>(
 				subtreeConfigs);
 		configsWithoutRef.removeAll(configsWithRef);
 

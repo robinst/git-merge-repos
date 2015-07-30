@@ -41,9 +41,8 @@ public class SubtreeMerger {
 			throws IOException {
 		PersonIdent latestIdent = getLatestPersonIdent(parentCommits.values());
 		DirCache treeDirCache = createTreeDirCache(parentCommits, message);
-		List<? extends ObjectId> parentIds = new ArrayList<RevCommit>(parentCommits.values());
-		ObjectInserter inserter = repository.newObjectInserter();
-		try {
+		List<? extends ObjectId> parentIds = new ArrayList<>(parentCommits.values());
+		try (ObjectInserter inserter = repository.newObjectInserter()) {
 			ObjectId treeId = treeDirCache.writeTree(inserter);
 
 			PersonIdent repositoryUser = new PersonIdent(repository);
@@ -58,8 +57,6 @@ public class SubtreeMerger {
 			ObjectId mergeCommit = inserter.insert(commitBuilder);
 			inserter.flush();
 			return mergeCommit;
-		} finally {
-			inserter.release();
 		}
 	}
 
@@ -76,11 +73,9 @@ public class SubtreeMerger {
 	}
 
 	private DirCache createTreeDirCache(Map<SubtreeConfig, RevCommit> parentCommits,
-			String commitMessage) throws MissingObjectException, IncorrectObjectTypeException,
-			CorruptObjectException, IOException {
+			String commitMessage) throws IOException {
 
-		TreeWalk treeWalk = new TreeWalk(repository);
-		try {
+		try (TreeWalk treeWalk = new TreeWalk(repository)) {
 			treeWalk.setRecursive(true);
 			addTrees(parentCommits, treeWalk);
 
@@ -101,8 +96,6 @@ public class SubtreeMerger {
 			}
 			builder.finish();
 			return builder.getDirCache();
-		} finally {
-			treeWalk.release();
 		}
 	}
 

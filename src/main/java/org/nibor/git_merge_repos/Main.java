@@ -20,7 +20,7 @@ public class Main {
 	private static Pattern REPO_AND_DIR = Pattern.compile("(.*):([^:]+)");
 
 	public static void main(String[] args) throws IOException, GitAPIException, URISyntaxException {
-		List<SubtreeConfig> subtreeConfigs = new ArrayList<SubtreeConfig>();
+		List<SubtreeConfig> subtreeConfigs = new ArrayList<>();
 
 		for (String arg : args) {
 			Matcher matcher = REPO_AND_DIR.matcher(arg);
