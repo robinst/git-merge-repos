@@ -69,7 +69,7 @@ With the same example as above, do the following for each repository beforehand
 
 Then, run the program like this:
 
-    ./run.sh /path/to/foo:. /path/to/bar:.
+    ./run.sh /absolute/path/to/foo:. /absolute/path/to/bar:.
 
 This time, we don't want the merge commit to change the directory structure, as
 we already did that using `git filter-branch`.
