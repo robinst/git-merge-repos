@@ -3,11 +3,12 @@ package org.nibor.git_merge_repos;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.URIish;
@@ -17,29 +18,28 @@ import org.eclipse.jgit.transport.URIish;
  */
 public class Main {
 
-	private static Pattern REPO_AND_DIR = Pattern.compile("(.*):([^:]+)");
-
 	public static void main(String[] args) throws IOException, GitAPIException, URISyntaxException {
 		List<SubtreeConfig> subtreeConfigs = new ArrayList<>();
 
-		for (String arg : args) {
-			Matcher matcher = REPO_AND_DIR.matcher(arg);
-			if (matcher.matches()) {
-				String repositoryUrl = matcher.group(1);
-				String directory = matcher.group(2);
+		String repo_data_file = args[0];
+		String merged_repo = args[1];
+
+		try (Stream<String> stream = Files.lines(Paths.get(repo_data_file))) {
+			for (String line : (Iterable<String>) stream::iterator) {
+				String[] items = line.split("\t");
+				String repositoryUrl = items[0];
+				String directory = items[1];
+
 				SubtreeConfig config = new SubtreeConfig(directory, new URIish(repositoryUrl));
 				subtreeConfigs.add(config);
-			} else {
-				exitInvalidUsage("invalid argument '" + arg
-						+ "', expected '<repository_url>:<target_directory>'");
 			}
 		}
 
 		if (subtreeConfigs.isEmpty()) {
-			exitInvalidUsage("usage: program <repository_url>:<target_directory>...");
+			exitInvalidUsage("usage: program <git repo data file path> <merged repo folder path>");
 		}
 
-		File outputDirectory = new File("merged-repo");
+		File outputDirectory = new File(merged_repo);
 		String outputPath = outputDirectory.getAbsolutePath();
 		System.out.println("Started merging " + subtreeConfigs.size()
 				+ " repositories into one, output directory: " + outputPath);
