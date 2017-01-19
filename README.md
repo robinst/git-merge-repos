@@ -67,6 +67,8 @@ With the same example as above, do the following for each repository beforehand
       --tag-name-filter cat \
       -- --all
 
+**Important Note:** If you are using Mac OS X, you will need to replace `\t` in the command above with an actual tab character. You can do this by holding CTRL + V and then pressing TAB. Otherwise, the script above will replace all instances of the letter `t` with the new subdirectory, instead of prepending the subdirectory onto the old path.
+
 Then, run the program like this:
 
     ./run.sh /absolute/path/to/foo:. /absolute/path/to/bar:.
