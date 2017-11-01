@@ -1,0 +1,18 @@
+[
+  {
+    "url": "https://github.com/ameriod/mvp.git",
+    "directory": "mvp"
+  },
+  {
+    "url": "https://github.com/ameriod/CheckBoxText.git",
+    "directory": "checkBoxText"
+  },
+  {
+    "url": "https://github.com/ameriod/Reflective-Drawable-Loader---Android.git",
+    "directory": "reflectiveDrawableLoader"
+  },
+  {
+    "url": "https://github.com/ameriod/MaterialStringPicker.git",
+    "directory": "msp"
+  }
+]
