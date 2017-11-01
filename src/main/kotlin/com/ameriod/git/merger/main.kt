@@ -59,27 +59,29 @@ private fun exitInvalidUsage(message: String) {
     throw IllegalArgumentException(message)
 }
 
-private data class InputRepo(val url: String,
-                             val directory: String)
+internal data class InputRepo(val url: String,
+                              val directory: String)
 
-private fun getNewRepoDir(args: Array<String>): String = args[NEW_REPO_DIR]
+internal fun getNewRepoDir(args: Array<String>): String {
+    val dir = getArgAtIndex(args, NEW_REPO_DIR);
+    if (dir == null) {
+        exitInvalidUsage("invalid arg neew to provide the new repo name")
+    }
+    return dir!!
+}
 
-private fun getSubtreeConfigs(args: Array<String>): List<SubtreeConfig> {
+internal fun getSubtreeConfigs(args: Array<String>): List<SubtreeConfig> {
     val file = getArgAtIndex(args, FILE)
     if (file == null) {
         exitInvalidUsage("invalid arg need to provide the file with the repositories to be merged")
     }
-    val subtreeConfigs = File(args[FILE]).inputStream()
-            .bufferedReader()
-            .use { reader -> reader.readText() }
-            .map { result -> result.toString() }
-            .map { json ->
-                Moshi.Builder()
-                        .add(KotlinJsonAdapterFactory())
-                        .build()
-                        .adapter<InputRepo>(Types.newParameterizedType(List::class.java, InputRepo::class.java))
-                        .fromJson(json)!!
-            }
+    val json = File(args[FILE]).inputStream().bufferedReader().use { it.readText() }
+    println("Repositories to merge: $json")
+    val subtreeConfigs = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
+            .adapter<List<InputRepo>>(Types.newParameterizedType(List::class.java, InputRepo::class.java))
+            .fromJson(json)!!
             .map { SubtreeConfig(it.directory, URIish(it.url)) }
 
     if (subtreeConfigs.isEmpty()) {
@@ -90,12 +92,12 @@ private fun getSubtreeConfigs(args: Array<String>): List<SubtreeConfig> {
     return subtreeConfigs
 }
 
-private fun getArgAtIndex(args: Array<String>, index: Int): String? = if (args.lastIndex < index) null else args[index]
+internal fun getArgAtIndex(args: Array<String>, index: Int): String? = if (args.lastIndex < index) null else args[index]
 
-private fun getCredentialsProvider(args: Array<String>): UsernamePasswordCredentialsProvider? {
+internal fun getCredentialsProvider(args: Array<String>): UsernamePasswordCredentialsProvider? {
     val username = getArgAtIndex(args, USERNAME)
     val password = getArgAtIndex(args, PASSWORD)
-    if ((username != null && password == null) || (username == null && password != null)) {
+    if ((username != null && password.isNullOrEmpty()) || (username.isNullOrEmpty() && password != null)) {
         exitInvalidUsage("error if providing a username and a password, you need both...")
     } else if (username != null && password != null) {
         return UsernamePasswordCredentialsProvider(username, password)
