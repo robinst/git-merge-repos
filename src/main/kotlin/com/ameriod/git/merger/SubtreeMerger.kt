@@ -29,7 +29,7 @@ import org.eclipse.jgit.util.RawParseUtils
 class SubtreeMerger(private val repository: Repository) {
 
     @Throws(IOException::class)
-    fun crezateMergeCommit(parentCommits: Map<SubtreeConfig, RevCommit>, message: String): ObjectId {
+    fun createMergeCommit(parentCommits: Map<SubtreeConfig, RevCommit>, message: String): ObjectId {
         val latestIdent = getLatestPersonIdent(parentCommits.values)
         val treeDirCache = createTreeDirCache(parentCommits, message)
         val parentIds = ArrayList(parentCommits.values)
@@ -74,7 +74,7 @@ class SubtreeMerger(private val repository: Repository) {
         val builder = DirCache.newInCore().builder()
         while (treeWalk.next()) {
             val iterator = getSingleTreeIterator(treeWalk, commitMessage) ?: throw IllegalStateException(
-                    "Tree walker did not return a single tree (should not happen): " + treeWalk.pathString)
+                    "Tree walker did not return a single tree (should not happen): ${treeWalk.pathString}")
             val path = Arrays.copyOf(iterator.entryPathBuffer,
                     iterator.entryPathLength)
             val entry = DirCacheEntry(path)
@@ -108,7 +108,11 @@ class SubtreeMerger(private val repository: Repository) {
             val it = treeWalk.getTree(i, AbstractTreeIterator::class.java)
             if (it != null) {
                 if (result != null) {
-                    val msg = "Trees of repositories overlap in path '" + it.entryPathString + "'. " + "We can only merge non-overlapping trees, " + "so make sure the repositories have been prepared for that. " + "One possible way is to process each repository to move the root to a subdirectory first.\n" + "Current commit:\n" + commitMessage
+                    val msg = "Trees of repositories overlap in path '${it.entryPathString}'. " +
+                            "We can only merge non-overlapping trees, " +
+                            "so make sure the repositories have been prepared for that. " +
+                            "One possible way is to process each repository to move the root to a subdirectory first.\n" +
+                            "Current commit:\n$commitMessage"
                     throw IllegalStateException(msg)
                 } else {
                     result = it

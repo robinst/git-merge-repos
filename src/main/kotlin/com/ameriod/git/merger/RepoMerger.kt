@@ -12,17 +12,12 @@ import org.eclipse.jgit.api.ResetCommand.ResetType
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.ObjectInserter
-import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.lib.RefDatabase
-import org.eclipse.jgit.lib.RefUpdate
 import org.eclipse.jgit.lib.RefUpdate.Result
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryBuilder
 import org.eclipse.jgit.lib.TagBuilder
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevObject
 import org.eclipse.jgit.revwalk.RevTag
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.transport.RefSpec
@@ -61,10 +56,8 @@ constructor(outputRepositoryPath: String,
     private fun fetch() {
         for (config in subtreeConfigs) {
             val branchesSpec = RefSpec(
-                    "refs/heads/*:refs/heads/original/"
-                            + config.remoteName + "/*")
-            val tagsSpec = RefSpec("refs/tags/*:refs/tags/original/"
-                    + config.remoteName + "/*")
+                    "refs/heads/*:refs/heads/original/${config.remoteName}/*")
+            val tagsSpec = RefSpec("refs/tags/*:refs/tags/original/${config.remoteName}/*")
             val git = Git(repository)
             git.fetch().setRemote(config.fetchUri.toPrivateString())
                     .setRefSpecs(branchesSpec, tagsSpec).call()
@@ -122,8 +115,7 @@ constructor(outputRepositoryPath: String,
     @Throws(IOException::class)
     private fun mergeBranch(branch: String): MergedRef {
 
-        val resolvedRefs = resolveRefs(
-                "refs/heads/original/", branch)
+        val resolvedRefs = resolveRefs("refs/heads/original/", branch)
 
         val parentCommits = LinkedHashMap<SubtreeConfig, RevCommit>()
         val revWalk = RevWalk(repository)
@@ -137,7 +129,7 @@ constructor(outputRepositoryPath: String,
 
         val mergedRef = getMergedRef("branch", branch, parentCommits.keys)
 
-        val mergeCommit = SubtreeMerger(repository).crezateMergeCommit(parentCommits,
+        val mergeCommit = SubtreeMerger(repository).createMergeCommit(parentCommits,
                 mergedRef.message)
 
         val refUpdate = repository.updateRef("refs/heads/" + branch)
@@ -149,8 +141,7 @@ constructor(outputRepositoryPath: String,
 
     @Throws(IOException::class)
     private fun mergeTag(tagName: String): MergedRef {
-        val resolvedRefs = resolveRefs(
-                "refs/tags/original/", tagName)
+        val resolvedRefs = resolveRefs("refs/tags/original/", tagName)
 
         // Annotated tag that should be used for creating the merged tag, null
         // if only lightweight tags exist
@@ -185,20 +176,18 @@ constructor(outputRepositoryPath: String,
                         }
                     }
                 } else {
-                    val msg = "Peeled tag " + tag.tagName+" does not point to a commit, but to the following object: "+peeled
+                    val msg = "Peeled tag ${tag.name} does not point to a commit, but to the following object: $peeled"
                     throw IllegalStateException(msg)
                 }
             } else {
-                throw IllegalArgumentException("Object with ID "
-                        + objectId + " has invalid type for a tag: "
-                        + revObject)
+                throw IllegalArgumentException("Object with ID $objectId has invalid type for a tag: $revObject")
             }
             parentCommits.put(config, commit)
         }
 
 
         val mergedRef = getMergedRef("tag", tagName, parentCommits.keys)
-        val mergeCommit = SubtreeMerger(repository).crezateMergeCommit(parentCommits,
+        val mergeCommit = SubtreeMerger(repository).createMergeCommit(parentCommits,
                 mergedRef.message)
 
         val objectToReference: ObjectId
@@ -222,8 +211,7 @@ constructor(outputRepositoryPath: String,
         refUpdate.setNewObjectId(objectToReference)
         val result = refUpdate.update()
         if (result != Result.NEW) {
-            throw IllegalStateException("Creating tag ref " + ref + " for "
-                    + objectToReference + " failed with result " + result)
+            throw IllegalStateException("Creating tag ref $ref for $objectToReference failed with result $result")
         }
 
         return mergedRef
@@ -246,7 +234,7 @@ constructor(outputRepositoryPath: String,
         val result = LinkedHashMap<SubtreeConfig, ObjectId>()
         for (config in subtreeConfigs) {
             val repositoryName = config.remoteName
-            val remoteBranch = refPrefix + repositoryName + "/" + name
+            val remoteBranch = "$refPrefix$repositoryName/$name"
             val objectId = repository.resolve(remoteBranch)
             if (objectId != null) {
                 result.put(config, objectId)

@@ -11,26 +11,23 @@ class MergedRef(val refType: String,
 
     val message: String
         get() {
-            val messageBuilder = StringBuilder()
-            messageBuilder.append("Merge ").append(refType).append(" '").append(refName)
-                    .append("' from multiple repositories")
-            messageBuilder.append("\n\n")
-            messageBuilder.append("Repositories:")
-            appendRepositoryNames(messageBuilder, configsWithRef)
+            val messageBuilder =
+                    appendRepositoryNames(StringBuilder("Merge $refType '$refName' from multiple repositories\n\n Repositories:"), configsWithRef)
             if (!configsWithoutRef.isEmpty()) {
-                messageBuilder.append("\n\nRepositories without this ").append(refType).append(":")
-                appendRepositoryNames(messageBuilder, configsWithoutRef)
+                appendRepositoryNames(messageBuilder
+                        .append("\n\nRepositories without this $refType:"), configsWithoutRef)
             }
-            messageBuilder.append("\n")
-            val message = messageBuilder.toString()
-            return message
+            return messageBuilder
+                    .append("\n")
+                    .toString()
         }
 
     private fun appendRepositoryNames(builder: StringBuilder,
-                                      configs: Collection<SubtreeConfig>) {
+                                      configs: Collection<SubtreeConfig>): StringBuilder {
         for (config in configs) {
             builder.append("\n\t")
             builder.append(config.remoteName)
         }
+        return builder
     }
 }

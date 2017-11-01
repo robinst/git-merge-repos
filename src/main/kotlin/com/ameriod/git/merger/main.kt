@@ -22,8 +22,7 @@ fun main(args: Array<String>) {
             val config = SubtreeConfig(directory, URIish(repositoryUrl))
             subtreeConfigs.add(config)
         } else {
-            exitInvalidUsage("invalid argument '" + arg
-                    + "', expected '<repository_url>:<target_directory>'")
+            exitInvalidUsage("invalid argument '$arg', expected '<repository_url>:<target_directory>'")
         }
     }
 
@@ -33,8 +32,7 @@ fun main(args: Array<String>) {
 
     val outputDirectory = File("merged-repo")
     val outputPath = outputDirectory.absolutePath
-    println("Started merging " + subtreeConfigs.size
-            + " repositories into one, output directory: " + outputPath)
+    println("Started merging ${subtreeConfigs.size} repositories into one, output directory: $outputPath")
 
     val start = System.currentTimeMillis()
     val merger = RepoMerger(outputPath, subtreeConfigs)
@@ -44,22 +42,23 @@ fun main(args: Array<String>) {
     val timeMs = end - start
     printIncompleteRefs(mergedRefs)
     println("Done, took $timeMs ms")
-    println("Merged repository: " + outputPath)
+    println("Merged repository: $outputPath")
 }
 
 private fun printIncompleteRefs(mergedRefs: List<MergedRef>) {
-    for (mergedRef in mergedRefs) {
-        if (!mergedRef.configsWithoutRef.isEmpty()) {
-            println(mergedRef.refType + " '" + mergedRef.refName
-                    + "' was not in: " + join(mergedRef.configsWithoutRef))
-        }
-    }
+    mergedRefs
+            .filter { mergedRef ->
+                !mergedRef.configsWithoutRef.isEmpty()
+            }
+            .map { mergedRef ->
+                println("${mergedRef.refType} '${mergedRef.refName}' was not in: ${join(mergedRef.configsWithoutRef)}")
+            }
 }
 
 private fun join(configs: Collection<SubtreeConfig>): String {
     val sb = StringBuilder()
     for (config in configs) {
-        if (sb.length != 0) {
+        if (sb.isNotEmpty()) {
             sb.append(", ")
         }
         sb.append(config.remoteName)
@@ -67,7 +66,8 @@ private fun join(configs: Collection<SubtreeConfig>): String {
     return sb.toString()
 }
 
+@Throws(IllegalArgumentException::class)
 private fun exitInvalidUsage(message: String) {
     System.err.println(message)
-    System.exit(64)
+    throw IllegalArgumentException(message)
 }

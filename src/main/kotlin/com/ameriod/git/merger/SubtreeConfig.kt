@@ -20,13 +20,11 @@ class SubtreeConfig
  */
 (val subtreeDirectory: String, val fetchUri: URIish) {
 
-    private val repositoryName: String
+    private val repositoryName = fetchUri.humanishName
 
     init {
-        this.repositoryName = fetchUri.humanishName
         if (this.repositoryName.isEmpty()) {
-            throw IllegalArgumentException(
-                    "Could not determine repository name from fetch URI: " + fetchUri)
+            throw IllegalArgumentException("Could not determine repository name from fetch URI: $fetchUri")
         }
     }
 
