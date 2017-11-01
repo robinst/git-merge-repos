@@ -20,6 +20,7 @@ import org.eclipse.jgit.lib.TagBuilder
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevTag
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RefSpec
 
 /**
@@ -28,7 +29,8 @@ import org.eclipse.jgit.transport.RefSpec
  */
 class RepoMerger @Throws(IOException::class)
 constructor(outputRepositoryPath: String,
-            private val subtreeConfigs: List<SubtreeConfig>) {
+            private val subtreeConfigs: List<SubtreeConfig>,
+            private val credentialsProvider: CredentialsProvider?) {
     private val repository: Repository
 
     init {
@@ -59,7 +61,9 @@ constructor(outputRepositoryPath: String,
                     "refs/heads/*:refs/heads/original/${config.remoteName}/*")
             val tagsSpec = RefSpec("refs/tags/*:refs/tags/original/${config.remoteName}/*")
             val git = Git(repository)
-            git.fetch().setRemote(config.fetchUri.toPrivateString())
+            git.fetch()
+                    .setCredentialsProvider(credentialsProvider)
+                    .setRemote(config.fetchUri.toPrivateString())
                     .setRefSpecs(branchesSpec, tagsSpec).call()
         }
     }

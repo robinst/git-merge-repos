@@ -1,47 +1,34 @@
 package com.ameriod.git.merger
 
+import com.squareup.moshi.KotlinJsonAdapterFactory
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.transport.URIish
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
-import java.util.ArrayList
-import java.util.regex.Pattern
 
-private val REPO_AND_DIR = Pattern.compile("(.*):([^:]+)")
+private const val FILE = 0
+private const val NEW_REPO_DIR = 1
+private const val USERNAME = 2
+private const val PASSWORD = 3
 
 @Throws(IOException::class, GitAPIException::class, URISyntaxException::class)
 fun main(args: Array<String>) {
-    val subtreeConfigs = ArrayList<SubtreeConfig>()
+    val start = System.currentTimeMillis()
 
-    for (arg in args) {
-        val matcher = REPO_AND_DIR.matcher(arg)
-        if (matcher.matches()) {
-            val repositoryUrl = matcher.group(1)
-            val directory = matcher.group(2)
-            val config = SubtreeConfig(directory, URIish(repositoryUrl))
-            subtreeConfigs.add(config)
-        } else {
-            exitInvalidUsage("invalid argument '$arg', expected '<repository_url>:<target_directory>'")
-        }
-    }
+    val subtreeConfigs = getSubtreeConfigs(args)
 
-    if (subtreeConfigs.isEmpty()) {
-        exitInvalidUsage("usage: program <repository_url>:<target_directory>...")
-    }
-
-    val outputDirectory = File("merged-repo")
-    val outputPath = outputDirectory.absolutePath
+    val outputPath = File(getNewRepoDir(args)).absolutePath
     println("Started merging ${subtreeConfigs.size} repositories into one, output directory: $outputPath")
 
-    val start = System.currentTimeMillis()
-    val merger = RepoMerger(outputPath, subtreeConfigs)
+    val merger = RepoMerger(outputPath, subtreeConfigs, getCredentialsProvider(args))
     val mergedRefs = merger.run()
-    val end = System.currentTimeMillis()
-
-    val timeMs = end - start
+    val timeMs = System.currentTimeMillis() - start
     printIncompleteRefs(mergedRefs)
-    println("Done, took $timeMs ms")
+    println("Done merged, took $timeMs ms")
     println("Merged repository: $outputPath")
 }
 
@@ -70,4 +57,48 @@ private fun join(configs: Collection<SubtreeConfig>): String {
 private fun exitInvalidUsage(message: String) {
     System.err.println(message)
     throw IllegalArgumentException(message)
+}
+
+private data class InputRepo(val url: String,
+                             val directory: String)
+
+private fun getNewRepoDir(args: Array<String>): String = args[NEW_REPO_DIR]
+
+private fun getSubtreeConfigs(args: Array<String>): List<SubtreeConfig> {
+    val file = getArgAtIndex(args, FILE)
+    if (file == null) {
+        exitInvalidUsage("invalid arg need to provide the file with the repositories to be merged")
+    }
+    val subtreeConfigs = File(args[FILE]).inputStream()
+            .bufferedReader()
+            .use { reader -> reader.readText() }
+            .map { result -> result.toString() }
+            .map { json ->
+                Moshi.Builder()
+                        .add(KotlinJsonAdapterFactory())
+                        .build()
+                        .adapter<InputRepo>(Types.newParameterizedType(List::class.java, InputRepo::class.java))
+                        .fromJson(json)!!
+            }
+            .map { SubtreeConfig(it.directory, URIish(it.url)) }
+
+    if (subtreeConfigs.isEmpty()) {
+        exitInvalidUsage("invalid arg '${args[FILE]} need to have an file with the specified json format")
+    } else {
+        println("Merging ${subtreeConfigs.size} repositories")
+    }
+    return subtreeConfigs
+}
+
+private fun getArgAtIndex(args: Array<String>, index: Int): String? = if (args.lastIndex < index) null else args[index]
+
+private fun getCredentialsProvider(args: Array<String>): UsernamePasswordCredentialsProvider? {
+    val username = getArgAtIndex(args, USERNAME)
+    val password = getArgAtIndex(args, PASSWORD)
+    if ((username != null && password == null) || (username == null && password != null)) {
+        exitInvalidUsage("error if providing a username and a password, you need both...")
+    } else if (username != null && password != null) {
+        return UsernamePasswordCredentialsProvider(username, password)
+    }
+    return null
 }
