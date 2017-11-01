@@ -1,14 +1,14 @@
 package com.ameriod.git.merger
 
-import com.squareup.moshi.KotlinJsonAdapterFactory
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
+import com.google.gson.Gson
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
+import com.google.gson.reflect.TypeToken
+
 
 private const val FILE = 0
 private const val NEW_REPO_DIR = 1
@@ -77,11 +77,9 @@ internal fun getSubtreeConfigs(args: Array<String>): List<SubtreeConfig> {
     }
     val json = File(args[FILE]).inputStream().bufferedReader().use { it.readText() }
     println("Repositories to merge: $json")
-    val subtreeConfigs = Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .build()
-            .adapter<List<InputRepo>>(Types.newParameterizedType(List::class.java, InputRepo::class.java))
-            .fromJson(json)!!
+    val subtreeConfigs = Gson().fromJson<List<InputRepo>>(json,
+            object : TypeToken<List<InputRepo>>() {
+            }.type)
             .map { SubtreeConfig(it.directory, URIish(it.url)) }
 
     if (subtreeConfigs.isEmpty()) {

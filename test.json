@@ -1,18 +1,18 @@
 [
   {
-    "repo": "https://github.com/ameriod/mvp.git",
+    "url": "https://github.com/ameriod/mvp.git",
     "directory": "mvp"
   },
   {
-    "repo": "https://github.com/ameriod/CheckBoxText.git",
+    "url": "https://github.com/ameriod/CheckBoxText.git",
     "directory": "checkBoxText"
   },
   {
-    "repo": "https://github.com/ameriod/Reflective-Drawable-Loader---Android.git",
+    "url": "https://github.com/ameriod/Reflective-Drawable-Loader---Android.git",
     "directory": "reflectiveDrawableLoader"
   },
   {
-    "repo": "https://github.com/ameriod/MaterialStringPicker.git",
+    "url": "https://github.com/ameriod/MaterialStringPicker.git",
     "directory": "msp"
   }
 ]
