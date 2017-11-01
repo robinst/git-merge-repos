@@ -5,6 +5,6 @@ import org.junit.Test
 
 class TestSource {
     @Test fun f() {
-        assertEquals("Hello, world!", getGreeting())
+        assertEquals(2, 1 + 1)
     }
 }
