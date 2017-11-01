@@ -15,6 +15,15 @@ mainClassName = 'com.ameriod.git.merger.MainKt'
 
 defaultTasks 'run'
 
+/**
+ * Call via ./gradlew run =Pmyargs=test.json,test,test@test.com,password
+ */
+run {
+    if (project.hasProperty('myargs')) {
+        args(myargs.split(','))
+    }
+}
+
 repositories {
     mavenCentral()
 }
