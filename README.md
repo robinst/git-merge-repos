@@ -56,14 +56,14 @@ in `bardir`.
 ### Preserve History for Paths
 
 With the same example as above, do the following for each repository beforehand
-(replace newsubdir with the name you want):
+(replace `newsubdir` with the name you want):
 
     git clone --mirror git@example.org:repo.git
 
     cd repo
 
     git filter-branch --index-filter \
-      'tab=$(printf "\t") && git ls-files -s --error-unmatch . >/dev/null 2>&1; [ $? != 0 ] || (git ls-files -s | sed "s~$tab\"*~&new-subdir/~" | GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info && mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE")' \
+      'tab=$(printf "\t") && git ls-files -s --error-unmatch . >/dev/null 2>&1; [ $? != 0 ] || (git ls-files -s | sed "s~$tab\"*~&newsubdir/~" | GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info && mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE")' \
       --tag-name-filter cat \
       -- --all
 
