@@ -55,7 +55,8 @@ in `bardir`.
 
 ### Preserve History for Paths
 
-With the same example as above, do the following for each repository beforehand
+First, install [git-filter-repo][git-filter-repo].
+Then, with the same example as above, do the following for each repository beforehand
 (replace `newsubdir` with the name you want):
 
     git clone --mirror git@example.org:repo.git
@@ -91,6 +92,7 @@ Copyright © 2013, 2014 Robin Stocker
 
 Licensed under the Apache License, see LICENSE file for details.
 
+[git-filter-repo]: https://github.com/newren/git-filter-repo
 [maven]: http://maven.apache.org/
 [jgit]: http://eclipse.org/jgit/
 [git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.105/script/git-stitch-repo
