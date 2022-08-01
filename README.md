@@ -70,7 +70,7 @@ Then, run the program like this:
     ./run.sh /absolute/path/to/foo:. /absolute/path/to/bar:.
 
 This time, we don't want the merge commit to change the directory structure, as
-we already did that using `git filter-branch`.
+we already did that using `git filter-repo`.
 
 Dependencies
 ------------
