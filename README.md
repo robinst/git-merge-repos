@@ -55,24 +55,22 @@ in `bardir`.
 
 ### Preserve History for Paths
 
-With the same example as above, do the following for each repository beforehand
+First, install [git-filter-repo][git-filter-repo].
+Then, with the same example as above, do the following for each repository beforehand
 (replace `newsubdir` with the name you want):
 
     git clone --mirror git@example.org:repo.git
 
     cd repo
 
-    git filter-branch --index-filter \
-      'tab=$(printf "\t") && git ls-files -s --error-unmatch . >/dev/null 2>&1; [ $? != 0 ] || (git ls-files -s | sed "s~$tab\"*~&newsubdir/~" | GIT_INDEX_FILE=$GIT_INDEX_FILE.new git update-index --index-info && mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE")' \
-      --tag-name-filter cat \
-      -- --all
+    git filter-repo --to-subdirectory-filter newsubdir
 
 Then, run the program like this:
 
     ./run.sh /absolute/path/to/foo:. /absolute/path/to/bar:.
 
 This time, we don't want the merge commit to change the directory structure, as
-we already did that using `git filter-branch`.
+we already did that using `git filter-repo`.
 
 Dependencies
 ------------
@@ -94,6 +92,7 @@ Copyright © 2013, 2014 Robin Stocker
 
 Licensed under the Apache License, see LICENSE file for details.
 
+[git-filter-repo]: https://github.com/newren/git-filter-repo
 [maven]: http://maven.apache.org/
 [jgit]: http://eclipse.org/jgit/
 [git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.105/script/git-stitch-repo
