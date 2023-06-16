@@ -16,10 +16,15 @@ import org.eclipse.jgit.transport.URIish;
  * Main class for merging repositories via command-line.
  */
 public class Main {
-
-	private static Pattern REPO_AND_DIR = Pattern.compile("(.*):([^:]+)");
+	private static final String USAGE = "usage: program <repository_url>:<target_directory>...";
+	private static final Pattern REPO_AND_DIR = Pattern.compile("(.*):([^:]+)");
 
 	public static void main(String[] args) throws IOException, GitAPIException, URISyntaxException {
+		if (args.length >= 1 && (args[0].equals("-h") || args[0].equals("--help"))) {
+			System.err.println(USAGE);
+			System.exit(0);
+		}
+
 		List<SubtreeConfig> subtreeConfigs = new ArrayList<>();
 
 		for (String arg : args) {
@@ -36,7 +41,7 @@ public class Main {
 		}
 
 		if (subtreeConfigs.isEmpty()) {
-			exitInvalidUsage("usage: program <repository_url>:<target_directory>...");
+			exitInvalidUsage(USAGE);
 		}
 
 		File outputDirectory = new File("merged-repo");
