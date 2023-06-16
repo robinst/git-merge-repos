@@ -3,6 +3,7 @@ package org.nibor.git_merge_repos;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -40,11 +41,10 @@ public class RepoMerger {
 	private final List<SubtreeConfig> subtreeConfigs;
 	private final Repository repository;
 
-	public RepoMerger(String outputRepositoryPath,
+	public RepoMerger(File outputRepositoryPath,
 			List<SubtreeConfig> subtreeConfigs) throws IOException {
 		this.subtreeConfigs = subtreeConfigs;
-		File file = new File(outputRepositoryPath);
-		repository = new RepositoryBuilder().setWorkTree(file).build();
+		repository = new RepositoryBuilder().setWorkTree(outputRepositoryPath).build();
 		if (!repository.getDirectory().exists()) {
 			repository.create();
 		}
@@ -112,10 +112,13 @@ public class RepoMerger {
 	}
 
 	private void resetToBranch() throws IOException, GitAPIException {
-		Ref master = repository.getRef(Constants.R_HEADS + "master");
-		if (master != null) {
-			Git git = new Git(repository);
-			git.reset().setMode(ResetType.HARD).setRef(master.getName()).call();
+		for (String name : Arrays.asList("main", "master")) {
+			Ref branch = repository.getRef(Constants.R_HEADS + name);
+			if (branch != null) {
+				Git git = new Git(repository);
+				git.reset().setMode(ResetType.HARD).setRef(branch.getName()).call();
+				break;
+			}
 		}
 	}
 

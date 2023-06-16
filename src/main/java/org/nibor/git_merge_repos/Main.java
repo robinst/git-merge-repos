@@ -21,8 +21,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException, GitAPIException, URISyntaxException {
 		if (args.length >= 1 && (args[0].equals("-h") || args[0].equals("--help"))) {
-			System.err.println(USAGE);
-			System.exit(0);
+			exit(USAGE, 0);
 		}
 
 		List<SubtreeConfig> subtreeConfigs = new ArrayList<>();
@@ -46,11 +45,14 @@ public class Main {
 
 		File outputDirectory = new File("merged-repo");
 		String outputPath = outputDirectory.getAbsolutePath();
+		if (outputDirectory.exists()) {
+			exit("Error: Output directory already exists (please remove it and rerun): " + outputPath, 1);
+		}
 		System.out.println("Started merging " + subtreeConfigs.size()
 				+ " repositories into one, output directory: " + outputPath);
 
 		long start = System.currentTimeMillis();
-		RepoMerger merger = new RepoMerger(outputPath, subtreeConfigs);
+		RepoMerger merger = new RepoMerger(outputDirectory, subtreeConfigs);
 		List<MergedRef> mergedRefs = merger.run();
 		long end = System.currentTimeMillis();
 
@@ -82,7 +84,11 @@ public class Main {
 	}
 
 	private static void exitInvalidUsage(String message) {
+		exit(message, 64);
+	}
+
+	private static void exit(String message, int status) {
 		System.err.println(message);
-		System.exit(64);
+		System.exit(status);
 	}
 }
