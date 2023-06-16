@@ -75,14 +75,13 @@ we already did that using `git filter-repo`.
 Dependencies
 ------------
 
-You will need to have Java and [Maven][maven] installed. [JGit][jgit] and other
-dependencies will be automatically downloaded when running the program.
+You will need to have at least Java 8 installed. Note that it's also tested against newer versions such as 17.
+[Maven][maven], [JGit][jgit] and other dependencies will be automatically downloaded when running the program.
 
 Other Solutions
 ---------------
 
-* When you have a simple, linear history, try out
-  [git-stitch-repo][git-stitch-repo]
+* When you have a simple, linear history, try out [git-stitch-repo][git-stitch-repo]
 * See the question [Combining multiple git repositories on Stack Overflow][stackoverflow]
 
 License
@@ -93,7 +92,7 @@ Copyright © 2013, 2014 Robin Stocker
 Licensed under the Apache License, see LICENSE file for details.
 
 [git-filter-repo]: https://github.com/newren/git-filter-repo
-[maven]: http://maven.apache.org/
-[jgit]: http://eclipse.org/jgit/
-[git-stitch-repo]: http://search.cpan.org/~book/Git-FastExport-0.105/script/git-stitch-repo
-[stackoverflow]: http://stackoverflow.com/questions/277029/combining-multiple-git-repositories
+[maven]: https://maven.apache.org/
+[jgit]: https://www.eclipse.org/jgit/
+[git-stitch-repo]: https://metacpan.org/release/BOOK/Git-FastExport-0.105/view/script/git-stitch-repo
+[stackoverflow]: https://stackoverflow.com/questions/277029/combining-multiple-git-repositories
