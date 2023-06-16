@@ -27,5 +27,15 @@ jobs:
       - name: Build
         run: ./mvnw clean verify
 
-      - name: Run
-        run: ./run.sh --help
+      - name: Prepare example repos
+        run: ./example/prepare-repos.sh
+
+      - name: Merge example repos
+        run: ./example.sh
+
+      - name: Check merged repo
+        run: |
+          (cd merged-repo && git log --pretty=format:%s main) > example/log.main.actual
+          (cd merged-repo && git log --pretty=format:%s v1) > example/log.v1.actual
+          diff -u example/log.main.{expected,actual}
+          diff -u example/log.v1.{expected,actual}

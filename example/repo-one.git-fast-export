@@ -1,0 +1,30 @@
+blob
+mark :1
+data 17
+File in repo one
+
+reset refs/tags/v1
+commit refs/tags/v1
+mark :2
+author Robin Stocker <robin@example.org> 1686896336 +1000
+committer Robin Stocker <robin@example.org> 1686896336 +1000
+data 24
+Repo one initial import
+M 100644 :1 one/README.md
+
+blob
+mark :3
+data 27
+File in repo one
+
+Add line
+
+commit refs/heads/main
+mark :4
+author Robin Stocker <robin@example.org> 1686896374 +1000
+committer Robin Stocker <robin@example.org> 1686896374 +1000
+data 18
+Repo one commit 2
+from :2
+M 100644 :3 one/README.md
+

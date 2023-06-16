@@ -1,0 +1,30 @@
+blob
+mark :1
+data 14
+Repo two file
+
+reset refs/tags/v1
+commit refs/tags/v1
+mark :2
+author Robin Stocker <robin@example.org> 1686896479 +1000
+committer Robin Stocker <robin@example.org> 1686896479 +1000
+data 24
+Repo two initial import
+M 100644 :1 two/two.txt
+
+blob
+mark :3
+data 28
+Repo two file
+
+Another line
+
+commit refs/heads/main
+mark :4
+author Robin Stocker <robin@example.org> 1686896498 +1000
+committer Robin Stocker <robin@example.org> 1686896498 +1000
+data 18
+Repo two commit 2
+from :2
+M 100644 :3 two/two.txt
+
