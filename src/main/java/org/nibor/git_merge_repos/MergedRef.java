@@ -45,8 +45,7 @@ public class MergedRef {
 			appendRepositoryNames(messageBuilder, configsWithoutRef);
 		}
 		messageBuilder.append("\n");
-		String message = messageBuilder.toString();
-		return message;
+		return messageBuilder.toString();
 	}
 
 	private static void appendRepositoryNames(StringBuilder builder,
