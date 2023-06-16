@@ -99,10 +99,10 @@ public class RepoMerger {
 		try (RevWalk revWalk = new RevWalk(repository)) {
 			Collection<Ref> refs = new ArrayList<>();
 			RefDatabase refDatabase = repository.getRefDatabase();
-			Map<String, Ref> originalBranches = refDatabase.getRefs("refs/heads/original/");
-			Map<String, Ref> originalTags = refDatabase.getRefs("refs/tags/original/");
-			refs.addAll(originalBranches.values());
-			refs.addAll(originalTags.values());
+			List<Ref> originalBranches = refDatabase.getRefsByPrefix("refs/heads/original/");
+			List<Ref> originalTags = refDatabase.getRefsByPrefix("refs/tags/original/");
+			refs.addAll(originalBranches);
+			refs.addAll(originalTags);
 			for (Ref originalRef : refs) {
 				RefUpdate refUpdate = repository.updateRef(originalRef.getName());
 				refUpdate.setForceUpdate(true);
@@ -113,7 +113,7 @@ public class RepoMerger {
 
 	private void resetToBranch() throws IOException, GitAPIException {
 		for (String name : Arrays.asList("main", "master")) {
-			Ref branch = repository.getRef(Constants.R_HEADS + name);
+			Ref branch = repository.exactRef(Constants.R_HEADS + name);
 			if (branch != null) {
 				Git git = new Git(repository);
 				git.reset().setMode(ResetType.HARD).setRef(branch.getName()).call();
@@ -237,10 +237,15 @@ public class RepoMerger {
 	}
 
 	private Collection<String> getRefSet(String prefix) throws IOException {
-		Map<String, Ref> refs = repository.getRefDatabase().getRefs(prefix);
+		List<Ref> refs = repository.getRefDatabase().getRefsByPrefix(prefix);
 		TreeSet<String> result = new TreeSet<>();
-		for (String refName : refs.keySet()) {
-			String branch = refName.split("/", 2)[1];
+		for (Ref ref : refs) {
+			// full: refs/heads/original/repo-one/main
+			String full = ref.getName();
+			// unprefixed: repo-one/main
+			String unprefixed = full.substring(prefix.length());
+			// branch name: main
+			String branch = unprefixed.split("/", 2)[1];
 			result.add(branch);
 		}
 		return result;

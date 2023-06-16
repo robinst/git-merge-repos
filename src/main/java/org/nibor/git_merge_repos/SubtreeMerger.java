@@ -1,6 +1,7 @@
 package org.nibor.git_merge_repos;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,9 +12,6 @@ import java.util.Map;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
 import org.eclipse.jgit.dircache.DirCacheEntry;
-import org.eclipse.jgit.errors.CorruptObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
@@ -23,7 +21,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.util.RawParseUtils;
 
 /**
  * Merges the passed commit trees into one tree, adjusting directory structure
@@ -107,7 +104,7 @@ public class SubtreeMerger {
 			if (".".equals(directory)) {
 				treeWalk.addTree(parentCommit.getTree());
 			} else {
-				byte[] prefix = directory.getBytes(RawParseUtils.UTF8_CHARSET);
+				byte[] prefix = directory.getBytes(StandardCharsets.UTF_8);
 				CanonicalTreeParser treeParser = new CanonicalTreeParser(prefix,
 						treeWalk.getObjectReader(), parentCommit.getTree());
 				treeWalk.addTree(treeParser);

@@ -75,7 +75,7 @@ we already did that using `git filter-repo`.
 Dependencies
 ------------
 
-You will need to have at least Java 8 installed. Note that it's also tested against newer versions such as 17.
+You need to have at least Java 11 installed. Note that it's also tested against newer versions such as 17.
 [Maven][maven], [JGit][jgit] and other dependencies will be automatically downloaded when running the program.
 
 Other Solutions
